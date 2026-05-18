@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./src/style.css">
+    <link rel="shortcut icon" href="./src/assets/images/meteor.png" type="image/x-icon">
+    <title>Space Wars</title>
+</head>
+
+<body>
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-content">
+            <h1 class="loading-title">SPACE WARS</h1>
+            <div class="loading-bar-container">
+                <div class="loading-bar-bg">
+                    <div id="loading-progress-bar" class="loading-bar-fill"></div>
+                </div>
+                <span id="loading-percent" class="loading-percent">0%</span>
+            </div>
+            <p class="loading-text">CARREGANDO RECURSOS...</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <section class="score-ui">
+            <div>
+                <span class="score">Score: <span>0</span></span>
+                <span class="level">Level: <span>1</span></span>
+                <span class="high">High: <span>0</span></span>
+            </div>
+        </section>
+
+        <div class="lives-ui">
+            <span>❤❤❤</span>
+        </div>
+
+        <section class="start-screen screen">
+            <div>
+                <img src="./src/assets/images/logo.png" alt="Logo" class="logo-jogo" draggable="false">
+                <div class="buttons-container">
+                    <button class="button-play">Play</button>
+                    <button class="button-ranking">Ranking</button>
+                </div>
+            </div>
+
+            <span>&copy; Space Wars Entreterimento</span>
+        </section>
+
+        <section class="game-over screen">
+            <div>
+                <h1>Game Over</h1>
+                <button class="button-restart">Restart</button>
+                <button class="button-menu">Menu</button>
+            </div>
+        </section>
+
+        <section class="ranking-screen screen">
+            <div class="ranking-container">
+                <div class="ranking-header">
+                    <h2 class="ranking-title">RANKING</h2>
+                    <button class="btn-back" id="btn-back-ranking">← VOLTAR</button>
+                </div>
+
+                <div class="ranking-tabs">
+                    <button class="tab-btn active" data-tab="daily">DIÁRIO</button>
+                    <button class="tab-btn" data-tab="weekly">SEMANAL</button>
+                    <button class="tab-btn" data-tab="monthly">MENSAL</button>
+                </div>
+
+                <ul class="ranking-list" id="ranking-list"></ul>
+
+                <div class="ranking-loading" id="ranking-loading">
+                    <p>CARREGANDO...</p>
+                </div>
+
+                <div class="ranking-empty" id="ranking-empty">
+                    <p>NENHUM SCORE REGISTRADO AINDA!</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="nickname-overlay" id="nickname-overlay">
+            <div class="nickname-modal">
+                <h2 class="nickname-title">ESCOLHA SEU NICKNAME</h2>
+                <p class="nickname-subtitle">Seu nome aparecerá no ranking. Entre 2 e 20 caracteres.</p>
+                <input type="text" class="nickname-input" id="nickname-input" placeholder="EX: SPACEPILOT"
+                    maxlength="20" autocomplete="off" spellcheck="false" />
+                <p class="nickname-error" id="nickname-error"></p>
+                <button class="btn-confirm" id="btn-confirm-nickname" disabled>JOGAR</button>
+                <button class="btn-change-later" id="btn-skip-nickname">Jogar sem salvar no ranking</button>
+            </div>
+        </div>
+
+        <canvas></canvas>
+        <script type="module" src="./src/index.js"></script>
+    </div>
+</body>
+
+</html>
