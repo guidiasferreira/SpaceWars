@@ -8,7 +8,7 @@ import Ranking from "./classes/Ranking.js";
 import NicknameModal from "./classes/NicknameModal.js";
 import AssetLoader from "./classes/AssetLoader.js";
 import { saveScore, getTopScores } from "./utils/firebase.js";
-import { GameState, NUMBER_STARS, PATH_SPACESHIP_IMAGE, PATH_INVADER_IMG, PATH_OBSTACLE_IMAGE, PATH_LOGO_IMAGE } from "./utils/constants.js";
+import { GameState, NUMBER_STARS, PATH_SPACESHIP_IMAGE, PATH_INVADER_IMG, PATH_OBSTACLE_IMAGE, PATH_LOGO_IMAGE, PATH_LASER_SPECIAL_IMAGE } from "./utils/constants.js";
 
 const AUDIO_PATHS = [
     "src/assets/audios/shoot.mp3",
@@ -22,6 +22,7 @@ const IMAGE_PATHS = [
     PATH_INVADER_IMG,
     PATH_OBSTACLE_IMAGE,
     PATH_LOGO_IMAGE,
+    PATH_LASER_SPECIAL_IMAGE,
 ];
 
 const soundEffects = new SoundEffects();
@@ -34,10 +35,18 @@ const levelElement = scoreUi.querySelector(".level > span");
 const highElement = scoreUi.querySelector(".high > span");
 const livesUi = document.querySelector(".lives-ui");
 const livesElement = livesUi.querySelector("span");
+const specialUi = document.getElementById("special-ui");
+const specialBarFill = document.getElementById("special-bar-fill");
+const specialLabel = document.getElementById("special-label");
 const buttonPlay = document.querySelector(".button-play");
 const buttonRanking = document.querySelector(".button-ranking");
 const buttonRestart = document.querySelector(".button-restart");
 const buttonMenu = document.querySelector(".button-menu");
+const pauseScreen = document.querySelector(".pause-screen");
+const btnPause = document.querySelector(".btn-pause");
+const buttonResume = document.querySelector(".button-resume");
+const buttonRestartPause = document.querySelector(".button-restart-pause");
+const buttonMenuPause = document.querySelector(".button-menu-pause");
 
 const ranking = new Ranking((period) => getTopScores(period));
 const nicknameModal = new NicknameModal((nickname) => {
@@ -79,13 +88,21 @@ const showGameData = () => {
     levelElement.textContent = gameData.level;
     highElement.textContent = gameData.high;
     livesElement.textContent = "❤".repeat(player.lives);
+
+    const pct = player.specialCharge;
+    specialBarFill.style.width = pct + "%";
+    const isReady = player.canFireSpecial();
+    specialBarFill.classList.toggle("ready", isReady);
+    specialLabel.classList.toggle("ready", isReady);
+    specialLabel.textContent = isReady ? "READY!" : "SPECIAL";
 };
 
 const player = new Player(canvas.width, canvas.height);
 
 const grid = new Grid(
     Math.round(Math.random() * 2 + 1),
-    Math.round(Math.random() * 3 + 1)
+    Math.round(Math.random() * 3 + 1),
+    canvas.width
 );
 
 const stars = [];
@@ -140,6 +157,10 @@ const keys = {
         pressed: false,
         released: true
     },
+    special: {
+        pressed: false,
+        released: true
+    },
 };
 
 const incrementScore = (value) => {
@@ -176,14 +197,18 @@ const drawProjectiles = () => {
 
     projectiles.forEach((projectile) => {
         projectile.draw(context);
-        projectile.update();
+        if (currentState !== GameState.PAUSED) {
+            projectile.update();
+        }
     });
 };
 
 const drawParticles = () => {
     particles.forEach((particle) => {
         particle.draw(context);
-        particle.update();
+        if (currentState !== GameState.PAUSED) {
+            particle.update();
+        }
     });
 };
 
@@ -230,18 +255,28 @@ const checkShootInvaders = () => {
             const projectile = playerProjectiles[pi];
             if (invader.hit(projectile)) {
                 soundEffects.playHitSound();
+                const isSpecial = projectile.isSpecial;
                 createExplosion(
                     {
                         x: invader.position.x + invader.width / 2,
                         y: invader.position.y + invader.height / 2,
                     },
-                    10,
+                    isSpecial ? 18 : 10,
                     "#888888"
                 );
                 incrementScore(10);
+
+                if (!isSpecial) {
+                    player.chargeSpecial();
+                }
+
                 grid.invaders.splice(ii, 1);
-                playerProjectiles.splice(pi, 1);
-                break;
+                if (!isSpecial) {
+                    playerProjectiles.splice(pi, 1);
+                }
+
+                if (!isSpecial) break;
+                else break;
             }
         }
     }
@@ -266,14 +301,14 @@ const checkShootPlayer = () => {
                         x: player.position.x + player.width / 2, y: player.position.y + player.height / 2
                     },
                     10,
-                    "crimson"
+                    "#FFFFFF"
                 );
                 createExplosion(
                     {
                         x: player.position.x + player.width / 2, y: player.position.y + player.height / 2
                     },
                     5,
-                    "#ff6600"
+                    "#A6A6A6"
                 );
             }
 
@@ -286,21 +321,30 @@ const checkShootObstacles = () => {
     for (let i = obstacles.length - 1; i >= 0; i--) {
         const obstacle = obstacles[i];
 
-        playerProjectiles.some((projectile, index) => {
+        for (let pi = playerProjectiles.length - 1; pi >= 0; pi--) {
+            const projectile = playerProjectiles[pi];
             if (obstacle.hit(projectile)) {
+                const isSpecial = projectile.isSpecial;
+
+                if (isSpecial) {
+                    obstacle.hp = 0;
+                }
+
                 createExplosion(
                     {
                         x: projectile.position.x,
                         y: projectile.position.y,
                     },
-                    5,
+                    isSpecial ? 12 : 5,
                     "#69625D"
                 );
 
-                playerProjectiles.splice(index, 1);
-                return true;
+                if (!isSpecial) {
+                    playerProjectiles.splice(pi, 1);
+                }
+                break;
             }
-        });
+        }
 
         invaderProjectiles.some((projectile, index) => {
             if (obstacle.hit(projectile)) {
@@ -396,13 +440,13 @@ const spawnGrid = () => {
             player.gainLife();
         }
 
-        const maxRows = Math.min(4 + Math.floor(gameData.level / 2), 8);
-        const maxCols = Math.min(4 + Math.floor(gameData.level / 2), 8);
+        const maxRows = Math.min(3 + Math.floor(gameData.level * 0.5), 8);
+        const maxCols = Math.min(3 + Math.floor(gameData.level * 0.5), 8);
         grid.rows = Math.round(Math.random() * (maxRows - 1) + 1);
-        grid.cols = Math.round(Math.random() * (maxCols - 1) + 2);
+        grid.cols = Math.round(Math.random() * (maxCols - 1) + 1);
 
         grid.invaderVelocity = Math.min(1.8 + (gameData.level * 0.1), 6);
-        grid.restart();
+        grid.restart(canvas.width);
 
         obstacles.length = 0;
         initObstacles();
@@ -434,6 +478,7 @@ const gameOver = () => {
     player.alive = false;
     document.body.append(gameOverScreen);
     gameOverScreen.classList.add("zoom-animation");
+    btnPause.style.display = "none";
 
     showGameData();
 
@@ -468,25 +513,33 @@ const gameLoop = (currentTime) => {
 
         drawStars();
 
-        if (currentState === GameState.PLAYING) {
+        if (currentState === GameState.PLAYING || currentState === GameState.PAUSED) {
             showGameData();
-            spawnGrid();
+
+            if (currentState === GameState.PLAYING) {
+                spawnGrid();
+            }
 
             drawProjectiles();
             drawParticles();
             drawObstacles();
 
-            clearProjectiles();
-            clearParticles();
+            if (currentState === GameState.PLAYING) {
+                clearProjectiles();
+                clearParticles();
 
-            checkShootInvaders();
-            checkShootPlayer();
-            checkShootObstacles();
-            checkInvadersCollidedObstacles();
-            checkPlayerCollidedInvaders();
+                checkShootInvaders();
+                checkShootPlayer();
+                checkShootObstacles();
+                checkInvadersCollidedObstacles();
+                checkPlayerCollidedInvaders();
+            }
 
             grid.draw(context);
-            grid.update(player.alive, canvas.width);
+
+            if (currentState === GameState.PLAYING) {
+                grid.update(player.alive, canvas.width);
+            }
 
             context.save();
 
@@ -495,22 +548,32 @@ const gameLoop = (currentTime) => {
                 player.position.y + player.height / 2
             );
 
-            if (keys.shoot.pressed) {
-                if (currentTime - lastShootTime >= 200) {
-                    soundEffects.playShootSound();
-                    player.shoot(playerProjectiles);
-                    lastShootTime = currentTime;
+            if (currentState === GameState.PLAYING) {
+                if (keys.shoot.pressed) {
+                    if (currentTime - lastShootTime >= 200) {
+                        soundEffects.playShootSound();
+                        player.shoot(playerProjectiles);
+                        lastShootTime = currentTime;
+                    }
                 }
-            }
 
-            if (keys.left) {
-                player.moveLeft();
-                context.rotate(-0.15);
-            }
+                if (keys.special.pressed && keys.special.released) {
+                    if (player.canFireSpecial()) {
+                        soundEffects.playShootSound();
+                        player.fireSpecial(playerProjectiles);
+                        keys.special.released = false;
+                    }
+                }
 
-            if (keys.right) {
-                player.moveRight();
-                context.rotate(0.15);
+                if (keys.left) {
+                    player.moveLeft();
+                    context.rotate(-0.15);
+                }
+
+                if (keys.right) {
+                    player.moveRight();
+                    context.rotate(0.15);
+                }
             }
 
             context.translate(
@@ -518,7 +581,7 @@ const gameLoop = (currentTime) => {
                 -player.position.y - player.height / 2
             );
 
-            player.draw(context);
+            player.draw(context, currentState === GameState.PAUSED);
             context.restore();
         }
 
@@ -556,6 +619,8 @@ const restartGame = () => {
     gameData.level = 0;
 
     gameOverScreen.remove();
+    pauseScreen.style.display = "none";
+    btnPause.style.display = "block";
     updateShootingInterval();
 };
 
@@ -567,7 +632,10 @@ const restartMenu = () => {
 
     scoreUi.style.display = "none";
     livesUi.style.display = "none";
+    specialUi.style.display = "none";
     gameOverScreen.remove();
+    pauseScreen.style.display = "none";
+    btnPause.style.display = "none";
 
     if (shootingInterval) {
         clearInterval(shootingInterval);
@@ -590,20 +658,54 @@ const restartMenu = () => {
     gameData.level = 0;
 };
 
-window.addEventListener("keydown", (event) => {
-    const key = event.key.toUpperCase();
+const togglePause = () => {
+    if (currentState === GameState.PLAYING) {
+        currentState = GameState.PAUSED;
+        pauseScreen.style.display = "flex";
+        btnPause.style.display = "none";
 
-    if (key === "A") keys.left = true;
-    if (key === "D") keys.right = true;
-    if (key === "ENTER" || key === " ") keys.shoot.pressed = true;
+        keys.left = false;
+        keys.right = false;
+        keys.shoot.pressed = false;
+        keys.special.pressed = false;
+
+    } else if (currentState === GameState.PAUSED) {
+        currentState = GameState.PLAYING;
+        pauseScreen.style.display = "none";
+        btnPause.style.display = "block";
+    }
+};
+
+window.addEventListener("keydown", (event) => {
+    const key = event.key;
+
+    if (key === "Escape" || key === "p" || key === "P") {
+        if (currentState === GameState.PLAYING || currentState === GameState.PAUSED) {
+            togglePause();
+            return;
+        }
+    }
+
+    if (currentState === GameState.PAUSED) return;
+
+    if (key === "A" || key === "a" || key === "ArrowLeft") keys.left = true;
+    if (key === "D" || key === "d" || key === "ArrowRight") keys.right = true;
+    if (key === "ENTER" || key === "Enter" || key === " ") keys.shoot.pressed = true;
+    if (key === "Shift" || key === "e" || key === "E") keys.special.pressed = true;
 });
 
 window.addEventListener("keyup", (event) => {
-    const key = event.key.toUpperCase();
+    const key = event.key;
 
-    if (key === "A") keys.left = false;
-    if (key === "D") keys.right = false;
-    if (key === "ENTER" || key === " ") keys.shoot.pressed = false;
+    if (currentState === GameState.PAUSED) return;
+
+    if (key === "A" || key === "a" || key === "ArrowLeft") keys.left = false;
+    if (key === "D" || key === "d" || key === "ArrowRight") keys.right = false;
+    if (key === "ENTER" || key === "Enter" || key === " ") keys.shoot.pressed = false;
+    if (key === "Shift" || key === "e" || key === "E") {
+        keys.special.pressed = false;
+        keys.special.released = true;
+    }
 });
 
 let shootingInterval = null;
@@ -611,13 +713,15 @@ let shootingInterval = null;
 const updateShootingInterval = () => {
     if (shootingInterval) clearInterval(shootingInterval);
 
-    const intervalTime = Math.max(600, 1600 - (gameData.level * 100));
+    const intervalTime = Math.max(500, 1650 - (gameData.level * 100));
 
-    const numberOfShooters = Math.min(5, Math.floor(gameData.level / 2) + 1);
+    const numberOfShooters = Math.min(6, Math.floor(gameData.level / 2) + 1);
 
-    const projectileVelocity = Math.min(3 + (gameData.level * 0.3), 6);
+    const projectileVelocity = Math.min(3 + (gameData.level * 0.5), 6);
 
     shootingInterval = setInterval(() => {
+        if (currentState !== GameState.PLAYING) return;
+
         const shootersCount = Math.min(numberOfShooters, grid.invaders.length);
 
         const shooters = [...grid.invaders].sort(() => 0.5 - Math.random()).slice(0, shootersCount);
@@ -633,6 +737,8 @@ const startGame = () => {
     startScreen.remove();
     scoreUi.style.display = "block";
     livesUi.style.display = "block";
+    specialUi.style.display = "flex";
+    btnPause.style.display = "block";
     currentState = GameState.PLAYING;
 
     updateShootingInterval();
@@ -655,6 +761,10 @@ buttonRanking.addEventListener("click", () => {
 
 buttonRestart.addEventListener("click", restartGame);
 buttonMenu.addEventListener("click", restartMenu);
+btnPause.addEventListener("click", togglePause);
+buttonResume.addEventListener("click", togglePause);
+buttonRestartPause.addEventListener("click", restartGame);
+buttonMenuPause.addEventListener("click", restartMenu);
 
 generateStars();
 

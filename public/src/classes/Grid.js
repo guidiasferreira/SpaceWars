@@ -1,9 +1,10 @@
 import Invader from "./Invader.js";
 
 class Grid {
-    constructor(rows, cols) {
+    constructor(rows, cols, canvasWidth = 800) {
         this.rows = rows;
         this.cols = cols;
+        this.canvasWidth = canvasWidth;
 
         this.direction = "right";
         this.moveDown = false;
@@ -14,11 +15,23 @@ class Grid {
 
     init() {
         const array = [];
+        const gridWidth = this.cols * 50;
+        const margin = Math.floor(Math.random() * 36) + 5;
+        const startFromRight = Math.random() > 0.5;
+
+        let startX;
+        if (startFromRight) {
+            startX = this.canvasWidth - gridWidth - margin;
+            this.direction = "left";
+        } else {
+            startX = margin;
+            this.direction = "right";
+        }
 
         for (let row = 0; row < this.rows; row++) {
             for (let col = 0; col < this.cols; col++) {
                 const invader = new Invader({
-                    x: col * 50 + 20,
+                    x: startX + col * 50,
                     y: row * 37 + 120,
                 }, this.invaderVelocity);
 
@@ -76,9 +89,9 @@ class Grid {
         return this.invaders[index];
     }
 
-    restart() {
+    restart(canvasWidth) {
+        if (canvasWidth) this.canvasWidth = canvasWidth;
         this.invaders = this.init();
-        this.direction = "right";
     }
 }
 

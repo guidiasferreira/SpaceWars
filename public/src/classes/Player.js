@@ -3,6 +3,8 @@ import Projectile from "./Projectile.js";
 
 const MAX_LIVES = 3;
 const INVINCIBILITY_FRAMES = 120;
+const MAX_SPECIAL = 100;
+const SPECIAL_PER_KILL = 2;
 
 class Player {
     constructor(canvasWidth, canvasHeight) {
@@ -27,6 +29,8 @@ class Player {
 
         this.invincible = false;
         this.invincibilityTimer = 0;
+
+        this.specialCharge = 0;
     }
 
     getImage(path) {
@@ -49,7 +53,7 @@ class Player {
     }
 
 
-    draw(context) {
+    draw(context, isPaused = false) {
         const shouldFlash = this.invincible && Math.floor(this.invincibilityTimer / 6) % 2 === 0;
 
         if (!shouldFlash) {
@@ -63,7 +67,9 @@ class Player {
 
         }
 
-        this.update();
+        if (!isPaused) {
+            this.update();
+        }
     }
 
     update() {
@@ -104,6 +110,33 @@ class Player {
         }
     }
 
+    chargeSpecial() {
+        this.specialCharge = Math.min(MAX_SPECIAL, this.specialCharge + SPECIAL_PER_KILL);
+    }
+
+    canFireSpecial() {
+        return this.specialCharge >= MAX_SPECIAL;
+    }
+
+    fireSpecial(projectiles) {
+        if (!this.canFireSpecial()) return false;
+
+        const p = new Projectile(
+            {
+                x: this.position.x + this.width / 2 - 24,
+                y: this.position.y - 20,
+            },
+            -10,
+            "#0091ff",
+            true
+        );
+
+        projectiles.push(p);
+        this.specialCharge = 0;
+
+        return true;
+    }
+
     reset(canvasWidth, canvasHeight) {
         this.alive = true;
         this.lives = MAX_LIVES;
@@ -113,29 +146,51 @@ class Player {
         this.canvasHeight = canvasHeight;
         this.position.x = canvasWidth / 2 - this.width / 2;
         this.position.y = canvasHeight - this.height - 30;
+        this.specialCharge = 0;
     }
 
     shoot(projectiles) {
-        const p = new Projectile({
-            x: this.position.x + this.width / 2 - 1,
-            y: this.position.y,
-        },
+        const offsetLeft = 12; // Posição do canhão esquerdo
+        const offsetRight = 12; // Posição do canhão direito
+        const projectileWidth = 3;
+
+        const pLeft = new Projectile(
+            {
+                x: this.position.x + offsetLeft,
+                y: this.position.y + 15,
+            },
             -7,
             "#0091ff"
         );
 
-        projectiles.push(p);
+        const pRight = new Projectile(
+            {
+                x: this.position.x + this.width - offsetRight - projectileWidth,
+                y: this.position.y + 15,
+            },
+            -7,
+            "#0091ff"
+        );
+
+        projectiles.push(pLeft, pRight);
     }
 
 
     hit(projectile) {
         if (this.invincible) return false;
 
+        const hitbox = {
+            x: this.position.x + 10,
+            y: this.position.y + 15,
+            width: this.width - 20,
+            height: this.height - 20
+        };
+
         return (
-            projectile.position.x >= this.position.x + 20 &&
-            projectile.position.x <= this.position.x + 20 + this.width - 38 &&
-            projectile.position.y >= this.position.y + 22 &&
-            projectile.position.y <= this.position.y + 22 + this.height - 34
+            projectile.position.x + projectile.width >= hitbox.x &&
+            projectile.position.x <= hitbox.x + hitbox.width &&
+            projectile.position.y + projectile.height >= hitbox.y &&
+            projectile.position.y <= hitbox.y + hitbox.height
         );
     }
 }

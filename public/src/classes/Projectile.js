@@ -1,15 +1,42 @@
+import { PATH_LASER_SPECIAL_IMAGE } from "../utils/constants.js";
+
 class Projectile {
-    constructor(position, velocity, color) {
+    constructor(position, velocity, color, isSpecial = false) {
         this.position = position;
-        this.width = 3;
-        this.height = 22;
+        this.isSpecial = isSpecial;
+        this.width = isSpecial ? 64 : 3;
+        this.height = isSpecial ? 64 : 22;
         this.velocity = velocity;
         this.color = color;
+
+        if (isSpecial) {
+            this.image = Projectile._getSpecialImage();
+        }
+    }
+
+    static _getSpecialImage() {
+        if (!Projectile._specialImage) {
+            const img = new Image();
+            img.src = PATH_LASER_SPECIAL_IMAGE;
+            Projectile._specialImage = img;
+        }
+        return Projectile._specialImage;
     }
 
     draw(context) {
         context.save();
 
+        if (this.isSpecial) {
+            this._drawSpecial(context);
+
+        } else {
+            this._drawNormal(context);
+        }
+
+        context.restore();
+    }
+
+    _drawNormal(context) {
         context.globalAlpha = 0.25;
         context.fillStyle = this.color;
         context.shadowColor = this.color;
@@ -37,8 +64,28 @@ class Projectile {
             this.width - 1,
             this.height - 4
         );
+    }
 
-        context.restore();
+    _drawSpecial(context) {
+        if (this.image && this.image.complete && this.image.naturalWidth > 0) {
+            context.shadowColor = "#0091ff";
+            context.shadowBlur = 20;
+            context.globalAlpha = 1;
+            context.drawImage(
+                this.image,
+                this.position.x,
+                this.position.y,
+                this.width,
+                this.height
+            );
+
+        } else {
+            context.globalAlpha = 1;
+            context.fillStyle = this.color;
+            context.shadowColor = this.color;
+            context.shadowBlur = 16;
+            context.fillRect(this.position.x, this.position.y, this.width, this.height);
+        }
     }
 
     update() {
