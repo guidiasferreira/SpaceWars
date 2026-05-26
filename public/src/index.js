@@ -445,7 +445,7 @@ const spawnGrid = () => {
         grid.rows = Math.round(Math.random() * (maxRows - 1) + 1);
         grid.cols = Math.round(Math.random() * (maxCols - 1) + 1);
 
-        grid.invaderVelocity = Math.min(1.8 + (gameData.level * 0.1), 6);
+        grid.invaderVelocity = Math.min(2 + (gameData.level * 0.1), 6);
         grid.restart(canvas.width);
 
         obstacles.length = 0;
@@ -715,7 +715,7 @@ const updateShootingInterval = () => {
 
     const intervalTime = Math.max(500, 1650 - (gameData.level * 100));
 
-    const numberOfShooters = Math.min(6, Math.floor(gameData.level / 2) + 1);
+    const numberOfShooters = Math.min(8, Math.floor(gameData.level / 2) + 1);
 
     const projectileVelocity = Math.min(3 + (gameData.level * 0.5), 6);
 
