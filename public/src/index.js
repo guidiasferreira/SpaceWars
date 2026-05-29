@@ -779,3 +779,24 @@ const initGame = async () => {
 };
 
 initGame();
+
+// =============================================
+// TUTORIAL
+// =============================================
+const tutorialOverlay = document.getElementById("tutorial-overlay");
+const btnTutorial = document.getElementById("btn-tutorial");
+const btnCloseTutorial = document.getElementById("btn-close-tutorial");
+
+btnTutorial.addEventListener("click", () => {
+    tutorialOverlay.classList.add("visible");
+});
+
+btnCloseTutorial.addEventListener("click", () => {
+    tutorialOverlay.classList.remove("visible");
+});
+
+tutorialOverlay.addEventListener("click", (e) => {
+    if (e.target === tutorialOverlay) {
+        tutorialOverlay.classList.remove("visible");
+    }
+});

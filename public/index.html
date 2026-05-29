@@ -55,6 +55,7 @@
                     <button class="button-play">Play</button>
                     <button class="button-ranking">Ranking</button>
                 </div>
+                <button class="button-tutorial" id="btn-tutorial" title="Como jogar">?</button>
             </div>
 
             <span>&copy; Space Wars Entreterimento</span>
@@ -113,6 +114,58 @@
                 <p class="nickname-error" id="nickname-error"></p>
                 <button class="btn-confirm" id="btn-confirm-nickname" disabled>JOGAR</button>
                 <button class="btn-change-later" id="btn-skip-nickname">Jogar sem salvar no ranking</button>
+            </div>
+        </div>
+
+        <!-- TUTORIAL OVERLAY -->
+        <div class="tutorial-overlay" id="tutorial-overlay">
+            <div class="tutorial-modal">
+                <div class="tutorial-header">
+                    <h2 class="tutorial-title">COMO JOGAR</h2>
+                    <button class="tutorial-close" id="btn-close-tutorial">✕</button>
+                </div>
+                <div class="tutorial-grid">
+                    <div class="tutorial-card">
+                        <div class="tutorial-icon">⬅ ➡</div>
+                        <div class="tutorial-label">MOVER</div>
+                        <div class="tutorial-keys">
+                            <kbd>A</kbd><kbd>D</kbd>
+                            <span class="or">ou</span>
+                            <kbd>◄</kbd><kbd>►</kbd>
+                        </div>
+                    </div>
+                    <div class="tutorial-card">
+                        <div class="tutorial-icon">🔫</div>
+                        <div class="tutorial-label">ATIRAR</div>
+                        <div class="tutorial-keys">
+                            <kbd>SPACE</kbd>
+                            <span class="or">ou</span>
+                            <kbd>ENTER</kbd>
+                        </div>
+                    </div>
+                    <div class="tutorial-card tutorial-card--special">
+                        <div class="tutorial-icon">⚡</div>
+                        <div class="tutorial-label">ESPECIAL</div>
+                        <div class="tutorial-keys">
+                            <kbd>SHIFT</kbd>
+                            <span class="or">ou</span>
+                            <kbd>E</kbd>
+                        </div>
+                    </div>
+                    <div class="tutorial-card">
+                        <div class="tutorial-icon">⏸</div>
+                        <div class="tutorial-label">PAUSAR</div>
+                        <div class="tutorial-keys">
+                            <kbd>ESC</kbd>
+                            <span class="or">ou</span>
+                            <kbd>P</kbd>
+                        </div>
+                    </div>
+                </div>
+                <div class="tutorial-tips">
+                    <p>🛡️ Destrua 50 inimigos para carregar o poder especial</p>
+                    <p>❤️ Você recupera uma vida a cada 5 níveis</p>
+                </div>
             </div>
         </div>
 
