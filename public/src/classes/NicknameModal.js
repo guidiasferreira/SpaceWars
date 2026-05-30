@@ -16,8 +16,21 @@ export default class NicknameModal {
         this.#input = document.querySelector("#nickname-input");
         this.#confirmBtn = document.querySelector("#btn-confirm-nickname");
         this.#errorEl = document.querySelector("#nickname-error");
-
         this.#setupEvents();
+
+        const btnRandom = document.querySelector("#btn-random-nickname");
+        if (btnRandom) {
+            btnRandom.addEventListener("click", () => this.generateRandomNickname());
+        }
+    }
+
+    generateRandomNickname() {
+        const prefixes = ["STAR", "SPACE", "NEBULA", "COSMIC", "ASTRO", "VOID", "NOVA", "ECLIPSE", "CYBER"];
+        const suffixes = ["PILOT", "FOX", "WOLF", "RANGER", "STRIKER", "FIGHTER", "X", "77", "99"];
+        const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+        const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+        this.#input.value = `${prefix}${suffix}`;
+        this.#input.dispatchEvent(new Event('input'));
     }
 
     #setupEvents() {

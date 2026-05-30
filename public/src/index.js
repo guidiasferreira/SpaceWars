@@ -481,6 +481,7 @@ const gameOver = () => {
     btnPause.style.display = "none";
 
     showGameData();
+    updateGamepadUIContext();
 
     saveScore(NicknameModal.getNickname(), gameData.score);
 };
@@ -610,7 +611,7 @@ const restartGame = () => {
     player.reset(canvas.width, canvas.height);
 
     grid.invaders.length = 0;
-    grid.invaderVelocity = 2;
+    grid.invaderVelocity = 2.5;
 
     invaderProjectiles.length = 0;
     playerProjectiles.length = 0;
@@ -622,6 +623,7 @@ const restartGame = () => {
     pauseScreen.style.display = "none";
     btnPause.style.display = "block";
     updateShootingInterval();
+    updateGamepadUIContext();
 };
 
 const restartMenu = () => {
@@ -646,7 +648,7 @@ const restartMenu = () => {
     player.alive = false;
 
     grid.invaders.length = 0;
-    grid.invaderVelocity = 2;
+    grid.invaderVelocity = 2.5;
 
     playerProjectiles.length = 0;
     invaderProjectiles.length = 0;
@@ -656,6 +658,7 @@ const restartMenu = () => {
 
     gameData.score = 0;
     gameData.level = 0;
+    updateGamepadUIContext();
 };
 
 const togglePause = () => {
@@ -668,11 +671,13 @@ const togglePause = () => {
         keys.right = false;
         keys.shoot.pressed = false;
         keys.special.pressed = false;
+        updateGamepadUIContext();
 
     } else if (currentState === GameState.PAUSED) {
         currentState = GameState.PLAYING;
         pauseScreen.style.display = "none";
         btnPause.style.display = "block";
+        updateGamepadUIContext();
     }
 };
 
@@ -713,11 +718,11 @@ let shootingInterval = null;
 const updateShootingInterval = () => {
     if (shootingInterval) clearInterval(shootingInterval);
 
-    const intervalTime = Math.max(500, 1650 - (gameData.level * 100));
+    const intervalTime = Math.max(450, 1500 - (gameData.level * 100));
 
     const numberOfShooters = Math.min(8, Math.floor(gameData.level / 2) + 1);
 
-    const projectileVelocity = Math.min(3 + (gameData.level * 0.5), 6);
+    const projectileVelocity = Math.min(3.5 + (gameData.level * 0.5), 6.5);
 
     shootingInterval = setInterval(() => {
         if (currentState !== GameState.PLAYING) return;
@@ -742,6 +747,7 @@ const startGame = () => {
     currentState = GameState.PLAYING;
 
     updateShootingInterval();
+    updateGamepadUIContext();
 };
 
 buttonPlay.addEventListener("click", () => {
@@ -789,14 +795,327 @@ const btnCloseTutorial = document.getElementById("btn-close-tutorial");
 
 btnTutorial.addEventListener("click", () => {
     tutorialOverlay.classList.add("visible");
+    updateGamepadUIContext();
 });
 
 btnCloseTutorial.addEventListener("click", () => {
     tutorialOverlay.classList.remove("visible");
+    updateGamepadUIContext();
 });
 
 tutorialOverlay.addEventListener("click", (e) => {
     if (e.target === tutorialOverlay) {
         tutorialOverlay.classList.remove("visible");
     }
+});
+
+// =============================================
+// GAMEPAD SUPPORT (PS4 / XBOX / PADRÃO)
+// =============================================
+
+const GAMEPAD = {
+    SHOOT: [0, 5, 7],    // Cross, R1, R2
+    SPECIAL: [3, 4],       // Triangle, L1
+    PAUSE: [9],          // Options
+    LEFT: [14],         // D-pad Left
+    RIGHT: [15],         // D-pad Right
+    NAV_UP: 12,          // D-pad Up   (UI)
+    NAV_DOWN: 13,          // D-pad Down (UI)
+    CONFIRM: [0],          // Cross (confirmar na UI)
+    BACK: [1],          // Circle (voltar na UI)
+    AXIS_X: 0,
+    AXIS_THRESHOLD: 0.3,
+};
+
+const prevGamepadButtons = {};
+
+const pollGamepad = () => {
+    const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+    const gp = gamepads[0];
+
+    if (!gp) return;
+
+    const id = gp.index;
+    if (!prevGamepadButtons[id]) {
+        prevGamepadButtons[id] = new Array(gp.buttons.length).fill(false);
+    }
+    const prev = prevGamepadButtons[id];
+
+    const pressed = (i) => gp.buttons[i]?.pressed ?? false;
+    const wasPress = (i) => prev[i] ?? false;
+    const rose = (i) => pressed(i) && !wasPress(i);
+    const fell = (i) => !pressed(i) && wasPress(i);
+
+    const pausePressed = GAMEPAD.PAUSE.some(rose);
+    if (pausePressed) {
+        if (currentState === GameState.PLAYING || currentState === GameState.PAUSED) {
+            togglePause();
+        }
+    }
+
+    if (currentState !== GameState.PLAYING) {
+        if (gamepadUI.isEditing()) {
+            gamepadUI.handleEdit(gp, rose);
+        } else {
+            if (rose(GAMEPAD.NAV_UP) || GAMEPAD.LEFT.some(rose)) gamepadUI.navigate(-1);
+            if (rose(GAMEPAD.NAV_DOWN) || GAMEPAD.RIGHT.some(rose)) gamepadUI.navigate(1);
+            if (GAMEPAD.CONFIRM.some(rose)) gamepadUI.confirm();
+            if (GAMEPAD.BACK.some(rose)) gamepadUI.back();
+        }
+
+        for (let i = 0; i < gp.buttons.length; i++) prev[i] = pressed(i);
+        return;
+    }
+
+    keys.left = GAMEPAD.LEFT.some(pressed) || gp.axes[GAMEPAD.AXIS_X] < -GAMEPAD.AXIS_THRESHOLD;
+    keys.right = GAMEPAD.RIGHT.some(pressed) || gp.axes[GAMEPAD.AXIS_X] > GAMEPAD.AXIS_THRESHOLD;
+
+    keys.shoot.pressed = GAMEPAD.SHOOT.some(pressed);
+
+    const specialNowPressed = GAMEPAD.SPECIAL.some(pressed);
+    const specialWasPressed = GAMEPAD.SPECIAL.some((i) => wasPress(i));
+
+    if (specialNowPressed) {
+        keys.special.pressed = true;
+    }
+    if (!specialNowPressed && specialWasPressed) {
+        keys.special.pressed = false;
+        keys.special.released = true;
+    }
+
+    for (let i = 0; i < gp.buttons.length; i++) prev[i] = pressed(i);
+};
+
+const _originalGameLoop = gameLoop;
+
+const gamepadLoop = () => {
+    pollGamepad();
+    window.requestAnimationFrame(gamepadLoop);
+};
+window.requestAnimationFrame(gamepadLoop);
+
+const showGamepadToast = (message, icon = "🎮") => {
+    const existing = document.getElementById("gamepad-toast");
+    if (existing) existing.remove();
+
+    const toast = document.createElement("div");
+    toast.id = "gamepad-toast";
+    toast.className = "gamepad-toast";
+    toast.innerHTML = `<span class="gamepad-toast-icon">${icon}</span><span>${message}</span>`;
+    document.body.appendChild(toast);
+
+    void toast.offsetWidth;
+    toast.classList.add("gamepad-toast--visible");
+
+    setTimeout(() => {
+        toast.classList.remove("gamepad-toast--visible");
+        setTimeout(() => toast.remove(), 400);
+    }, 3000);
+};
+
+// =============================================
+// GAMEPAD UI NAVIGATION
+// =============================================
+
+let gamepadConnected = false;
+
+const gamepadUI = (() => {
+    let elements = [];
+    let index = 0;
+    let currentContext = null;
+    let editing = false;
+    let editPos = 0;
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_ ";
+
+    const contexts = {
+        start: () => [
+            document.querySelector('.button-play'),
+            document.querySelector('.button-ranking'),
+            document.querySelector('#btn-tutorial'),
+        ].filter(Boolean),
+
+        gameover: () => [
+            document.querySelector('.button-restart'),
+            document.querySelector('.button-menu'),
+        ].filter(Boolean),
+
+        paused: () => [
+            document.querySelector('.button-resume'),
+            document.querySelector('.button-restart-pause'),
+            document.querySelector('.button-menu-pause'),
+        ].filter(Boolean),
+
+        nickname: () => [
+            document.querySelector('#nickname-input'),
+            document.querySelector('#btn-random-nickname'),
+            document.querySelector('#btn-confirm-nickname'),
+            document.querySelector('#btn-skip-nickname'),
+        ].filter(el => el && !el.disabled),
+
+        ranking: () => [
+            ...document.querySelectorAll('.tab-btn'),
+            document.querySelector('#btn-back-ranking'),
+        ].filter(Boolean),
+
+        tutorial: () => [
+            document.querySelector('#btn-close-tutorial'),
+        ].filter(Boolean),
+    };
+
+    const backActions = {
+        ranking: () => document.querySelector('#btn-back-ranking')?.click(),
+        tutorial: () => document.querySelector('#btn-close-tutorial')?.click(),
+        paused: () => document.querySelector('.button-resume')?.click(),
+        nickname: () => document.querySelector('#btn-skip-nickname')?.click(),
+    };
+
+    const updateFocus = () => {
+        elements.forEach((el, i) => el.classList.toggle('gamepad-focused', i === index));
+        elements[index]?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+    };
+
+    const clear = () => {
+        elements.forEach(el => el.classList.remove('gamepad-focused'));
+        elements = [];
+        index = 0;
+        currentContext = null;
+        editing = false;
+    };
+
+    const setContext = (name) => {
+        clear();
+        currentContext = name;
+        const getter = contexts[name];
+        if (!getter) return;
+        elements = getter();
+        index = 0;
+        if (elements.length > 0) updateFocus();
+    };
+
+    const navigate = (dir) => {
+        if (elements.length === 0) return;
+        index = (index + dir + elements.length) % elements.length;
+        updateFocus();
+    };
+
+    const confirm = () => {
+        const el = elements[index];
+        if (!el) return;
+        if (el.tagName === 'INPUT') {
+            editing = true;
+            editPos = el.value.length;
+            if (editPos > 0) editPos--;
+            if (el.value === "") { el.value = "A"; editPos = 0; }
+            el.focus();
+            setTimeout(() => el.setSelectionRange(editPos, editPos + 1), 10);
+            showGamepadToast("▲▼ letras | ◄► move | ✕ confirma", "⌨️");
+        } else {
+            el.click();
+        }
+    };
+
+    const handleEdit = (gp, rose) => {
+        const el = elements[index];
+        if (GAMEPAD.CONFIRM.some(rose) || GAMEPAD.BACK.some(rose)) {
+            editing = false;
+            el.blur();
+            el.dispatchEvent(new Event('input'));
+            return;
+        }
+
+        let val = el.value;
+        if (val.length === 0) { val = "A"; editPos = 0; }
+
+        if (GAMEPAD.LEFT.some(rose)) {
+            if (editPos > 0) editPos--;
+            el.setSelectionRange(editPos, editPos + 1);
+        }
+        if (GAMEPAD.RIGHT.some(rose)) {
+            if (editPos < val.length - 1) {
+                editPos++;
+            } else if (val.length < 20) {
+                val += "A";
+                editPos++;
+                el.value = val;
+            }
+            el.setSelectionRange(editPos, editPos + 1);
+        }
+
+        if (rose(GAMEPAD.NAV_UP) || rose(GAMEPAD.NAV_DOWN)) {
+            let char = val[editPos] || "A";
+            let charIdx = chars.indexOf(char.toUpperCase());
+            if (charIdx === -1) charIdx = 0;
+
+            if (rose(GAMEPAD.NAV_DOWN)) charIdx = (charIdx + 1) % chars.length;
+            if (rose(GAMEPAD.NAV_UP)) charIdx = (charIdx - 1 + chars.length) % chars.length;
+
+            val = val.substring(0, editPos) + chars[charIdx] + val.substring(editPos + 1);
+            el.value = val;
+            el.setSelectionRange(editPos, editPos + 1);
+            el.dispatchEvent(new Event('input'));
+        }
+    };
+
+    const back = () => {
+        const action = backActions[currentContext];
+        if (action) action();
+    };
+
+    const isEditing = () => editing;
+
+    return { clear, setContext, navigate, confirm, back, isEditing, handleEdit };
+})();
+
+const updateGamepadUIContext = () => {
+    if (!gamepadConnected) { gamepadUI.clear(); return; }
+
+    const nicknameOverlay = document.getElementById('nickname-overlay');
+    if (nicknameOverlay?.style.display === 'flex') {
+        gamepadUI.setContext('nickname'); return;
+    }
+
+    const rankingScreen = document.querySelector('.ranking-screen');
+    if (rankingScreen?.style.display === 'flex') {
+        gamepadUI.setContext('ranking'); return;
+    }
+
+    const tutOverlay = document.getElementById('tutorial-overlay');
+    if (tutOverlay?.classList.contains('visible')) {
+        gamepadUI.setContext('tutorial'); return;
+    }
+
+    switch (currentState) {
+        case GameState.START: gamepadUI.setContext('start'); break;
+        case GameState.PAUSED: gamepadUI.setContext('paused'); break;
+        case GameState.GAME_OVER: gamepadUI.setContext('gameover'); break;
+        default: gamepadUI.clear();
+    }
+};
+
+const uiObserver = new MutationObserver(() => updateGamepadUIContext());
+const _nicknameEl = document.getElementById('nickname-overlay');
+const _rankingEl = document.querySelector('.ranking-screen');
+if (_nicknameEl) uiObserver.observe(_nicknameEl, { attributes: true, attributeFilter: ['style'] });
+if (_rankingEl) uiObserver.observe(_rankingEl, { attributes: true, attributeFilter: ['style'] });
+
+// =============================================
+// GAMEPAD CONNECT / DISCONNECT EVENTS
+// =============================================
+
+window.addEventListener("gamepadconnected", (e) => {
+    console.log(`[Gamepad] Conectado: ${e.gamepad.id}`);
+    gamepadConnected = true;
+    showGamepadToast("Controle conectado!", "🎮");
+    updateGamepadUIContext();
+});
+
+window.addEventListener("gamepaddisconnected", (e) => {
+    console.log(`[Gamepad] Desconectado: ${e.gamepad.id}`);
+    gamepadConnected = false;
+    showGamepadToast("Controle desconectado", "⚠️");
+    gamepadUI.clear();
+    keys.left = false;
+    keys.right = false;
+    keys.shoot.pressed = false;
+    keys.special.pressed = false;
 });

@@ -9,6 +9,8 @@
     <meta name="description"
         content="Jogue Space Wars, um incrível jogo de nave em 8-bits direto do seu navegador. Destrua os invasores, desvie dos obstáculos e tente bater o recorde mundial!">
     <meta name="google-site-verification" content="-Ax9cBH-eLsBltWKbUIEqAiaYSIFw1RgihE8Hmhc5LM" />
+    <meta name="keywords"
+        content="jogo de nave, space wars, jogo de tiro, browser game, jogo 8-bits, jogo online, space invaders, jogo de navinha, free game, jogo grátis, jogo de navinha online, jogo de nave para jogar no navegador">
     <title>Space Wars - Jogo de Nave no Navegador</title>
 </head>
 
@@ -109,8 +111,12 @@
             <div class="nickname-modal">
                 <h2 class="nickname-title">ESCOLHA SEU NICKNAME</h2>
                 <p class="nickname-subtitle">Seu nome aparecerá no ranking. Entre 2 e 20 caracteres.</p>
-                <input type="text" class="nickname-input" id="nickname-input" placeholder="EX: SPACEPILOT"
-                    maxlength="20" autocomplete="off" spellcheck="false" />
+                <div class="nickname-input-group">
+                    <input type="text" class="nickname-input" id="nickname-input" placeholder="EX: SPACEPILOT"
+                        maxlength="20" autocomplete="off" spellcheck="false" />
+                    <button type="button" class="btn-random-nickname" id="btn-random-nickname"
+                        title="Gerar nome aleatório">🎲</button>
+                </div>
                 <p class="nickname-error" id="nickname-error"></p>
                 <button class="btn-confirm" id="btn-confirm-nickname" disabled>JOGAR</button>
                 <button class="btn-change-later" id="btn-skip-nickname">Jogar sem salvar no ranking</button>
@@ -166,6 +172,37 @@
                     <p>🛡️ Destrua 50 inimigos para carregar o poder especial</p>
                     <p>❤️ Você recupera uma vida a cada 5 níveis</p>
                 </div>
+
+                <div class="tutorial-gamepad">
+                    <div class="tutorial-gamepad-title">🎮 CONTROLE (PS4 / XBOX)</div>
+                    <div class="tutorial-gamepad-grid">
+                        <div class="tutorial-gamepad-row">
+                            <span class="gamepad-btn gamepad-btn--dpad">◄ ►</span>
+                            <span class="gamepad-action">ou</span>
+                            <span class="gamepad-btn gamepad-btn--stick">🕹 esq.</span>
+                            <span class="gamepad-action">→ MOVER</span>
+                        </div>
+                        <div class="tutorial-gamepad-row">
+                            <span class="gamepad-btn gamepad-btn--cross">✕</span>
+                            <span class="gamepad-action">ou</span>
+                            <span class="gamepad-btn">R1</span>
+                            <span class="gamepad-action">ou</span>
+                            <span class="gamepad-btn">R2</span>
+                            <span class="gamepad-action">→ ATIRAR</span>
+                        </div>
+                        <div class="tutorial-gamepad-row">
+                            <span class="gamepad-btn gamepad-btn--triangle">△</span>
+                            <span class="gamepad-action">ou</span>
+                            <span class="gamepad-btn">L1</span>
+                            <span class="gamepad-action">→ ESPECIAL</span>
+                        </div>
+                        <div class="tutorial-gamepad-row">
+                            <span class="gamepad-btn">OPTIONS</span>
+                            <span class="gamepad-action">→ PAUSAR</span>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 

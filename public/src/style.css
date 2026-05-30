@@ -440,6 +440,12 @@ canvas {
     line-height: 2.2;
 }
 
+.nickname-input-group {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
 .nickname-input {
     background: #111120;
     border: 1px solid #2a2a40;
@@ -453,6 +459,27 @@ canvas {
     letter-spacing: 2px;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
+
+.btn-random-nickname {
+    background: #111120;
+    border: 1px solid #2a2a40;
+    border-radius: 6px;
+    padding: 0 16px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    color: #FAF517;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-random-nickname:hover {
+    background: rgba(250, 245, 23, 0.1);
+    border-color: #FAF517;
+    box-shadow: 0 0 10px rgba(250, 245, 23, 0.2);
+}
+
 
 .nickname-input:focus {
     border-color: #FAF517;
@@ -1114,5 +1141,162 @@ kbd {
         width: 34px;
         height: 34px;
         font-size: 0.75rem;
+    }
+}
+
+/* =============================================
+   GAMEPAD TOAST NOTIFICATION
+   ============================================= */
+
+.gamepad-toast {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(8, 8, 20, 0.92);
+    border: 1px solid rgba(250, 245, 23, 0.25);
+    border-radius: 10px;
+    padding: 12px 22px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #ddd;
+    font-size: 0.5rem;
+    letter-spacing: 1.5px;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    box-shadow: 0 0 30px rgba(250, 245, 23, 0.08), 0 8px 30px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    white-space: nowrap;
+}
+
+.gamepad-toast--visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.gamepad-toast-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+/* =============================================
+   GAMEPAD TUTORIAL SECTION
+   ============================================= */
+
+.tutorial-gamepad {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.tutorial-gamepad-title {
+    font-size: 0.48rem;
+    color: #888;
+    letter-spacing: 2px;
+}
+
+.tutorial-gamepad-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tutorial-gamepad-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.gamepad-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #111125;
+    border: 1px solid #2a2a45;
+    border-bottom: 3px solid #3a3a60;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-family: "Press Start 2P", sans-serif;
+    font-size: 0.42rem;
+    color: #ddd;
+    white-space: nowrap;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+/* Cross / X — azul PlayStation */
+.gamepad-btn--cross {
+    color: #5bc8f5;
+    border-color: #1a3a55;
+    border-bottom-color: #0060a0;
+}
+
+
+/* Triangle / △ — verde PlayStation */
+.gamepad-btn--triangle {
+    color: #1bc989;
+    border-color: #0a3d28;
+    border-bottom-color: #0a7040;
+}
+
+/* =============================================
+   GAMEPAD UI FOCUS INDICATOR
+   ============================================= */
+
+/**
+ * Aplicado pelo JS quando o usuário navega pelos botões com o controle.
+ * Imita o estilo de foco de teclado mas com a identidade visual do jogo.
+ */
+.gamepad-focused {
+    outline: 2px solid #FAF517 !important;
+    outline-offset: 3px !important;
+    box-shadow: 0 0 0 2px rgba(250, 245, 23, 0.25), 0 0 14px rgba(250, 245, 23, 0.3) !important;
+    position: relative;
+    z-index: 1;
+}
+
+/* Para inputs (campo de nickname) */
+.gamepad-focused[type="text"] {
+    border-color: #FAF517 !important;
+    box-shadow: 0 0 12px rgba(250, 245, 23, 0.25) !important;
+    outline: none !important;
+}
+
+
+/* D-pad */
+.gamepad-btn--dpad {
+    letter-spacing: 3px;
+}
+
+/* Stick label */
+.gamepad-btn--stick {
+    font-family: sans-serif;
+    font-size: 0.6rem;
+}
+
+.gamepad-action {
+    font-size: 0.38rem;
+    color: #3a3a3a;
+    letter-spacing: 1px;
+}
+
+@media (max-width: 540px) {
+    .tutorial-gamepad-title {
+        font-size: 0.42rem;
+    }
+
+    .gamepad-btn {
+        font-size: 0.38rem;
+        padding: 4px 8px;
+    }
+
+    .gamepad-action {
+        font-size: 0.34rem;
     }
 }
